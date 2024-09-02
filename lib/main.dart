@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:mom_project/gets/g_theme_controller.dart';
+import 'package:mom_project/responsive/r_desktop_scaffold.dart';
+import 'package:mom_project/responsive/r_layout.dart';
+import 'package:mom_project/responsive/r_mobile_scaffold.dart';
+import 'package:mom_project/responsive/r_tablet_scaffold.dart';
 import 'package:mom_project/theme/t_app_color.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final themeService = Get.put(ThemeService());
   if (!kIsWeb && (Platform.isWindows || Platform.isMacOS)) {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = const WindowOptions(
@@ -35,7 +37,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       home: const CustomTitleBarWrapper(child: MyHomePage()),
     );
   }
@@ -46,34 +48,10 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeService themeService = Get.find();
-    final customTheme = Theme.of(context).extension<CustomThemeExtension>()!;
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Theme Demo')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 200,
-              height: 100,
-              color: customTheme.containerColor,
-              child: Center(
-                child: Text(
-                  'Themed Container',
-                  style: TextStyle(color: customTheme.textColor),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              child: const Text('Toggle Theme'),
-              onPressed: () => themeService.toggleTheme(),
-            ),
-          ],
-        ),
-      ),
+    return const ResponsiveLayout(
+      mobileScaffold: MobileScaffold(),
+      tabletScaffold: TabletScaffold(),
+      desktopScaffold: DesktopScaffold(),
     );
   }
 }
@@ -104,7 +82,7 @@ class CustomTitleBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 28,
-      color: Colors.transparent,
+      color: Theme.of(context).primaryColor,
       child: Row(
         children: [
           if (Platform.isMacOS) ...[
