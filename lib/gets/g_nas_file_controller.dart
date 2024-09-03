@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:mom_project/api/api_data.dart';
 
@@ -68,6 +69,7 @@ class SynologyFileListController extends GetxController {
         'method': method,
         'folder_path': targetPath,
         '_sid': authController.sid,
+        'additional': '["size","time","perm","type","owner","real_path"]',
       });
 
       debugPrint('File List API Response: ${response.body}');
@@ -78,11 +80,40 @@ class SynologyFileListController extends GetxController {
 
         if (data != null && data['success'] == true) {
           if (data['data'] != null) {
+            List<Map<String, dynamic>> processedItems = [];
             if (method == 'list_share') {
-              items.value = List<Map<String, dynamic>>.from(data['data']['shares']);
+              for (var share in data['data']['shares']) {
+                int count = await getSubItemCount(share['path']);
+                bool hasSubfolders = await checkForSubfolders(share['path']);
+                processedItems.add({
+                  ...share,
+                  'subItemCount': count,
+                  'hasSubfolders': hasSubfolders,
+                  'fileSize': formatFileSize(share['additional']['size'] as int?),
+                  'isdir': true,
+                });
+              }
             } else {
-              items.value = List<Map<String, dynamic>>.from(data['data']['files']);
+              for (var file in data['data']['files']) {
+                if (file['isdir']) {
+                  int count = await getSubItemCount(file['path']);
+                  bool hasSubfolders = await checkForSubfolders(file['path']);
+                  processedItems.add({
+                    ...file,
+                    'subItemCount': count,
+                    'hasSubfolders': hasSubfolders,
+                    'fileSize': formatFileSize(file['additional']['size'] as int?),
+                  });
+                } else {
+                  processedItems.add({
+                    ...file,
+                    'fileSize': formatFileSize(file['additional']['size'] as int?),
+                    'fileExtension': getFileExtension(file['name']),
+                  });
+                }
+              }
             }
+            items.value = processedItems;
             debugPrint(items.toString());
             currentPath.value = targetPath;
           } else {
@@ -137,6 +168,43 @@ class SynologyFileListController extends GetxController {
       debugPrint('Error getting sub-item count: $e');
     }
     return 0;
+  }
+
+  Future<bool> checkForSubfolders(String folderPath) async {
+    var url = 'http://$nasUrl:$nasPort/webapi/entry.cgi';
+    try {
+      var response = await http.post(Uri.parse(url), body: {
+        'api': 'SYNO.FileStation.List',
+        'version': '2',
+        'method': 'list',
+        'folder_path': folderPath,
+        '_sid': authController.sid,
+        'limit': '1',
+        'type': 'dir',
+      });
+
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+        if (data != null && data['success'] == true) {
+          return (data['data']['files'] as List).isNotEmpty;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking for subfolders: $e');
+    }
+    return false;
+  }
+
+  String formatFileSize(int? bytes) {
+    if (bytes == null || bytes <= 0) return "0 B";
+    const suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    var i = (log(bytes) / log(1024)).floor();
+    return '${(bytes / pow(1024, i)).toStringAsFixed(1)} ${suffixes[i]}';
+  }
+
+  String getFileExtension(String fileName) {
+    int dotIndex = fileName.lastIndexOf('.');
+    return (dotIndex != -1) ? fileName.substring(dotIndex + 1) : '';
   }
 
   void navigateToFolder(String path) {
