@@ -49,7 +49,7 @@ class SynologyFileListController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    ever(authController.sid.obs, (_) => fetchFileList());
+    ever(authController.rxSid, (_) => fetchFileList());
     fetchFileList();
   }
 
@@ -83,6 +83,7 @@ class SynologyFileListController extends GetxController {
             } else {
               items.value = List<Map<String, dynamic>>.from(data['data']['files']);
             }
+            debugPrint(items.toString());
             currentPath.value = targetPath;
           } else {
             error.value = '파일이나 폴더를 찾을 수 없습니다.';
@@ -112,6 +113,30 @@ class SynologyFileListController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<int> getSubItemCount(String folderPath) async {
+    var url = 'http://$nasUrl:$nasPort/webapi/entry.cgi';
+    try {
+      var response = await http.post(Uri.parse(url), body: {
+        'api': 'SYNO.FileStation.List',
+        'version': '2',
+        'method': 'list',
+        'folder_path': folderPath,
+        '_sid': authController.sid,
+        'limit': '0',
+      });
+
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+        if (data != null && data['success'] == true) {
+          return data['data']['total'] ?? 0;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error getting sub-item count: $e');
+    }
+    return 0;
   }
 
   void navigateToFolder(String path) {

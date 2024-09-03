@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:mom_project/gets/g_nas_file_controller.dart';
 import 'package:mom_project/responsive/r_desktop_scaffold.dart';
 import 'package:mom_project/responsive/r_layout.dart';
 import 'package:mom_project/responsive/r_mobile_scaffold.dart';
@@ -26,6 +27,9 @@ void main() async {
     });
   }
 
+  final authController = Get.put(AuthController());
+  await authController.login();
+
   runApp(const MyApp());
 }
 
@@ -35,6 +39,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      initialBinding: BindingsBuilder(() {
+        Get.put(SynologyFileListController());
+      }),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.dark,

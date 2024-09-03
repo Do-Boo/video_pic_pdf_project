@@ -9,19 +9,23 @@ class AppColors {
   static const Color textDark = Color(0xFFd6d6d8);
   static const Color containerLight = Color(0xFFd6d6d8);
   static const Color containerDark = Color(0xFF26262e);
+  static const Color iconColorLight = Color(0xFF26262e);
+  static const Color iconColorDark = Color(0xFF26262e);
 }
 
 class CustomThemeExtension extends ThemeExtension<CustomThemeExtension> {
   final Color containerColor;
   final Color textColor;
+  final Color iconColor;
 
-  const CustomThemeExtension({required this.containerColor, required this.textColor});
+  const CustomThemeExtension({required this.iconColor, required this.containerColor, required this.textColor});
 
   @override
-  ThemeExtension<CustomThemeExtension> copyWith({Color? containerColor, Color? textColor}) {
+  ThemeExtension<CustomThemeExtension> copyWith({Color? containerColor, Color? textColor, Color? iconColor}) {
     return CustomThemeExtension(
       containerColor: containerColor ?? this.containerColor,
       textColor: textColor ?? this.textColor,
+      iconColor: iconColor ?? this.iconColor,
     );
   }
 
@@ -33,6 +37,7 @@ class CustomThemeExtension extends ThemeExtension<CustomThemeExtension> {
     return CustomThemeExtension(
       containerColor: Color.lerp(containerColor, other.containerColor, t)!,
       textColor: Color.lerp(textColor, other.textColor, t)!,
+      iconColor: Color.lerp(iconColor, other.iconColor, t)!,
     );
   }
 }
@@ -50,6 +55,7 @@ class AppTheme {
       CustomThemeExtension(
         containerColor: AppColors.containerLight,
         textColor: AppColors.textLight,
+        iconColor: AppColors.iconColorLight,
       ),
     ],
   );
@@ -66,6 +72,7 @@ class AppTheme {
       CustomThemeExtension(
         containerColor: AppColors.containerDark,
         textColor: AppColors.textDark,
+        iconColor: AppColors.iconColorDark,
       ),
     ],
   );

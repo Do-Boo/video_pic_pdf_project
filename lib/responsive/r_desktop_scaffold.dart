@@ -1,8 +1,4 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:mom_project/gets/g_theme_controller.dart';
 import 'package:mom_project/pages/p_all_files_page.dart';
 import 'package:mom_project/theme/t_app_color.dart';
 import 'package:mom_project/widgets/w_navigationbar.dart';

@@ -25,7 +25,7 @@ class CustomLine extends StatelessWidget {
                 children: [
                   Container(height: 1, width: 7, color: Theme.of(context).hintColor.withOpacity(0.5)),
                   const SizedBox(width: 3),
-                  Expanded(child: Container(height: 1, color: Theme.of(context).hintColor.withOpacity(0.5))),
+                  Expanded(child: Container(height: 1, color: Theme.of(context).hintColor.withOpacity(0.2))),
                   const SizedBox(width: 3),
                   Container(height: 1, width: 7, color: Theme.of(context).hintColor.withOpacity(0.5)),
                 ],
