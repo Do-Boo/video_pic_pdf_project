@@ -13,7 +13,7 @@ class _TabletScaffoldState extends State<TabletScaffold> {
     return Scaffold(
       body: Row(
         children: [
-          Container(width: 88, color: Colors.red),
+          Container(width: 88, color: Colors.blue),
           Expanded(flex: 10, child: Container(color: Colors.blue)),
           Container(width: 256 + 24, color: Colors.yellow),
         ],
