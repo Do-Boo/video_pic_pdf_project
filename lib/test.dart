@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
-import 'package:mom_project/gets/g_synology_controller.dart';
 import 'package:mom_project/service/api_data.dart';
+import 'package:mom_project/widgets/w_video_thumbnail.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -29,10 +29,13 @@ void main() async {
   runApp(GetMaterialApp(
     title: 'Synology Folder Explorer',
     theme: ThemeData(primarySwatch: Colors.blue),
-    initialBinding: BindingsBuilder(() {
-      Get.put(SynologyFileManagerController());
-    }),
-    home: const SynologyFileManagerTest(),
+    home: const SizedBox(
+      width: 200,
+      height: 200,
+      child: VideoThumbnailGenerator(
+        videoUrl: 'https://doboo.tplinkdns.com/files/%EC%97%B0%EC%8A%B5%ED%8F%B4%EB%8D%94%201/asdf.mp4',
+      ),
+    ),
   ));
 }
 
