@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:mom_project/theme/t_app_color.dart';
+import 'package:mom_project/theme/t_app_theme.dart';
 
 class CustomNavigationBar extends StatefulWidget {
   const CustomNavigationBar({super.key});
@@ -19,7 +19,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
     final navTitles = ["HOME", "ALL FILES", "VIDEOS", "PHOTOS", "RECENT", "SETTINGS"];
     final navIcons = [
       HugeIcons.strokeRoundedHome09,
-      HugeIcons.strokeRoundedFile01,
+      HugeIcons.strokeRoundedFolder01,
       HugeIcons.strokeRoundedVideo01,
       HugeIcons.strokeRoundedImage02,
       HugeIcons.strokeRoundedClock01,
@@ -67,7 +67,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                           },
                         ),
                         const SizedBox(height: 8),
-                        Text(navTitles[i]),
+                        Text(navTitles[i], style: TextStyle(color: customTheme.textColor.withOpacity(0.5))),
                       ],
                     ),
                   ),

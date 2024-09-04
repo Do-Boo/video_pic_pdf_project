@@ -84,6 +84,34 @@ class SynologyFileManagerController extends GetxController {
     }
   }
 
+  Future<List<FileItem>> searchFiles({String searchTerm = '', String fileType = ''}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://$synologyApi/synology_api.php'),
+        body: json.encode({
+          'action': 'search_files',
+          'searchTerm': searchTerm,
+          'fileType': fileType,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> jsonResult = json.decode(response.body);
+        items.value = (json.decode(response.body) as List).map((item) => FileItem.fromJson(item)).toList();
+        return jsonResult.map((item) => FileItem.fromJson(item)).toList();
+      } else {
+        throw Exception('Failed to search files');
+      }
+    } catch (e) {
+      error.value = 'Failed to search files: $e';
+      Get.snackbar('Error', error.value);
+      return [];
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<String> getFolderSize(String folder) async {
     try {
       final response = await http.post(

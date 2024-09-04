@@ -6,7 +6,7 @@ import 'package:mom_project/responsive/r_desktop_scaffold.dart';
 import 'package:mom_project/responsive/r_layout.dart';
 import 'package:mom_project/responsive/r_mobile_scaffold.dart';
 import 'package:mom_project/responsive/r_tablet_scaffold.dart';
-import 'package:mom_project/theme/t_app_color.dart';
+import 'package:mom_project/theme/t_app_theme.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform;
 

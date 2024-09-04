@@ -51,6 +51,7 @@ class AppTheme {
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: AppColors.textLight),
     ),
+    fontFamily: "Roboto",
     extensions: const [
       CustomThemeExtension(
         containerColor: AppColors.containerLight,
@@ -68,6 +69,7 @@ class AppTheme {
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: AppColors.textDark),
     ),
+    fontFamily: "Roboto",
     extensions: const [
       CustomThemeExtension(
         containerColor: AppColors.containerDark,
