@@ -13,25 +13,22 @@ class DesktopScaffold extends StatefulWidget {
 class _DesktopScaffoldState extends State<DesktopScaffold> {
   @override
   Widget build(BuildContext context) {
-    final customTheme = Theme.of(context).extension<CustomThemeExtension>()!;
+    // final customTheme = Theme.of(context).extension<CustomThemeExtension>()!;
     return Scaffold(
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const CustomNavigationBar(),
           Expanded(
-            flex: 10,
             child: Container(
               color: Theme.of(context).primaryColor,
               child: const Stack(
                 children: [
-                  // Placeholder(),
                   FilesPage(),
                 ],
               ),
             ),
           ),
-          Container(width: 352, color: customTheme.containerColor),
         ],
       ),
     );

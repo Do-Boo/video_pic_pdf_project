@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mom_project/gets/g_nas_file_controller.dart';
+import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
+import 'package:mom_project/gets/g_synology_controller.dart';
+import 'package:mom_project/service/api_data.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -22,48 +26,217 @@ void main() async {
     });
   }
 
-  final authController = Get.put(AuthController());
-  await authController.login(); // 초기 로그인 수행
-
   runApp(GetMaterialApp(
     title: 'Synology Folder Explorer',
     theme: ThemeData(primarySwatch: Colors.blue),
     initialBinding: BindingsBuilder(() {
-      Get.put(SynologyFileListController());
+      Get.put(SynologyFileManagerController());
     }),
-    home: const SomeView(),
+    home: const SynologyFileManagerTest(),
   ));
 }
 
-class SomeView extends GetView<SynologyFileListController> {
-  const SomeView({super.key});
+class SynologyFileManagerTest extends StatefulWidget {
+  const SynologyFileManagerTest({super.key});
+
+  @override
+  _SynologyFileManagerTestState createState() => _SynologyFileManagerTestState();
+}
+
+class _SynologyFileManagerTestState extends State<SynologyFileManagerTest> {
+  final String apiUrl = 'http://$synologyApi/synology_api.php';
+  List<dynamic> items = [];
+  String currentPath = '';
+
+  @override
+  void initState() {
+    super.initState();
+    loadItems();
+  }
+
+  Future<void> loadItems() async {
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: json.encode({
+          'action': 'list',
+          'path': currentPath,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          items = json.decode(response.body);
+        });
+      } else {
+        throw Exception('Failed to load items');
+      }
+    } catch (e) {
+      showErrorDialog('Failed to load items: $e');
+    }
+  }
+
+  Future<void> uploadFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+      if (result != null) {
+        String filePath = result.files.single.path!;
+        String fileName = result.files.single.name;
+
+        var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+        request.fields['action'] = 'upload';
+        request.fields['path'] = currentPath;
+        request.files.add(await http.MultipartFile.fromPath('file', filePath, filename: fileName));
+
+        var streamedResponse = await request.send();
+        var response = await http.Response.fromStream(streamedResponse);
+
+        print('Server response: ${response.body}'); // 디버깅을 위한 출력
+
+        if (response.statusCode == 200) {
+          var jsonResponse = json.decode(response.body);
+          if (jsonResponse['success'] == true) {
+            showSuccessDialog('File uploaded successfully');
+            loadItems();
+          } else {
+            throw Exception(jsonResponse['error'] ?? 'Unknown error occurred');
+          }
+        } else {
+          throw Exception('Server responded with status code: ${response.statusCode}');
+        }
+      }
+    } catch (e) {
+      showErrorDialog('File upload failed: $e');
+    }
+  }
+
+  Future<void> deleteFile(String filePath) async {
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: json.encode({
+          'action': 'delete',
+          'path': filePath,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        var jsonResponse = json.decode(response.body);
+        if (jsonResponse['success'] == true) {
+          showSuccessDialog('File deleted successfully');
+          loadItems();
+        } else {
+          throw Exception(jsonResponse['error']);
+        }
+      } else {
+        throw Exception('File deletion failed');
+      }
+    } catch (e) {
+      showErrorDialog('File deletion failed: $e');
+    }
+  }
+
+  void showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Success'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('파일 목록')),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (controller.error.isNotEmpty) {
-          return Center(child: Text(controller.error.value));
-        } else {
-          return ListView.builder(
-            itemCount: controller.items.length,
-            itemBuilder: (context, index) {
-              var item = controller.items[index];
-              return ListTile(
-                leading: Icon(item['isdir'] == true ? Icons.folder : Icons.insert_drive_file),
-                title: Text(item['name'] ?? ''),
-                onTap: item['isdir'] == true ? () => controller.navigateToFolder(item['path']) : null,
-              );
-            },
-          );
-        }
-      }),
+      appBar: AppBar(
+        title: const Text('Synology File Manager Test'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            onPressed: uploadFile,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('Current Path: $currentPath'),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return ListTile(
+                  leading: Icon(item['isDirectory'] ? Icons.folder : Icons.insert_drive_file),
+                  title: Text(item['name']),
+                  subtitle: Text(item['isDirectory'] ? 'Directory' : 'File'),
+                  trailing: item['isDirectory']
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => deleteFile(item['path']),
+                        ),
+                  onTap: item['isDirectory']
+                      ? () {
+                          setState(() {
+                            currentPath = item['path'];
+                            loadItems();
+                          });
+                        }
+                      : null,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: controller.goToParentFolder,
-        child: const Icon(Icons.refresh),
+        onPressed: () {
+          if (currentPath != '') {
+            setState(() {
+              currentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+              loadItems();
+            });
+          }
+        },
+        tooltip: 'Go to parent directory',
+        child: const Icon(Icons.arrow_upward),
       ),
     );
   }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:mom_project/gets/g_nas_file_controller.dart';
+import 'package:mom_project/gets/g_synology_controller.dart';
+import 'package:mom_project/service/api_data.dart';
 import 'package:mom_project/theme/t_app_color.dart';
+import 'package:mom_project/widgets/w_file_update_button.dart';
 import 'package:mom_project/widgets/w_hover_container.dart';
 import 'package:mom_project/widgets/w_hover_text.dart';
 import 'package:mom_project/widgets/w_line.dart';
@@ -13,7 +15,14 @@ class FilesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final customTheme = Theme.of(context).extension<CustomThemeExtension>()!;
-    final controller = Get.find<SynologyFileListController>();
+    final controller = Get.find<SynologyFileManagerController>();
+
+    // 초기 데이터 로딩
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.getItems().isEmpty) {
+        controller.loadItems();
+      }
+    });
 
     return SingleChildScrollView(
       child: Padding(
@@ -26,7 +35,7 @@ class FilesPage extends StatelessWidget {
               child: Row(
                 children: [
                   const SizedBox(width: 8),
-                  const Text("ALl FILES", style: TextStyle(fontSize: 21)),
+                  const Text("ALL FILES", style: TextStyle(fontSize: 21)),
                   const Expanded(child: SizedBox()),
                   HugeIcon(icon: HugeIcons.strokeRoundedAddSquare, color: customTheme.textColor.withOpacity(0.5)),
                   const SizedBox(width: 32),
@@ -61,7 +70,7 @@ class FilesPage extends StatelessWidget {
                 Expanded(
                   child: Obx(() {
                     return Row(
-                      children: controller.currentPath.value.split("/").map((e) {
+                      children: controller.getCurrentPath().replaceAll(rootFolder, "").split("/").map((e) {
                         if (e.isNotEmpty) {
                           return Row(
                             children: [
@@ -101,16 +110,19 @@ class FilesPage extends StatelessWidget {
                     ],
                   ),
                 ),
+                FileUploadButton(controller: controller),
               ],
             ),
             const SizedBox(height: 24),
             AspectRatio(
               aspectRatio: 3.4 / 1,
               child: Obx(() {
-                if (controller.isLoading.value) {
+                if (controller.getIsLoading()) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (controller.error.isNotEmpty) {
-                  return Center(child: Text(controller.error.value));
+                } else if (controller.getErrorMessage().isNotEmpty) {
+                  return Center(child: Text(controller.getErrorMessage()));
+                } else if (controller.getItems().isEmpty) {
+                  return const Center(child: Text('No items found'));
                 } else {
                   return GridView.builder(
                     shrinkWrap: true,
@@ -120,11 +132,11 @@ class FilesPage extends StatelessWidget {
                       crossAxisSpacing: 24,
                       childAspectRatio: 1.8 / 1,
                     ),
-                    itemCount: controller.currentPath.value != '/' ? controller.items.length + 1 : controller.items.length,
+                    itemCount: controller.getCurrentPath() != "/" ? controller.getItems().length + 1 : controller.getItems().length,
                     itemBuilder: (context, index) {
-                      if (controller.currentPath.value != '/' && index == 0) {
+                      if (controller.getCurrentPath() != "/" && index == 0) {
                         return InkWell(
-                          onTap: controller.goToParentFolder,
+                          onTap: controller.navigateToParentDirectory,
                           child: HoverContainer(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -142,22 +154,22 @@ class FilesPage extends StatelessWidget {
                           ),
                         );
                       } else {
-                        var item = controller.items[controller.currentPath.value != '/' ? index - 1 : index];
+                        var item = controller.getItems()[controller.getCurrentPath() != "/" ? index - 1 : index];
                         return InkWell(
-                          onTap: item['isdir'] == true ? () => controller.navigateToFolder(item['path']) : null,
+                          onTap: item.isDirectory ? () => controller.navigateToFolder(item.path) : null,
                           child: HoverContainer(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Expanded(flex: 3, child: SizedBox()),
-                                Icon(item['isdir'] == true ? Icons.folder : Icons.insert_drive_file, size: 32, color: customTheme.textColor.withOpacity(0.5)),
+                                Icon(item.isDirectory ? Icons.folder : Icons.insert_drive_file, size: 32, color: customTheme.textColor.withOpacity(0.5)),
                                 const Expanded(flex: 3, child: SizedBox()),
-                                FittedBox(fit: BoxFit.scaleDown, child: Text(item['name'] ?? '', style: const TextStyle(fontSize: 16))),
+                                FittedBox(fit: BoxFit.scaleDown, child: Text(item.name, style: const TextStyle(fontSize: 16))),
                                 const Expanded(flex: 2, child: SizedBox()),
-                                if (item['isdir'] == true)
+                                if (item.isDirectory)
                                   FutureBuilder<int>(
-                                    future: controller.getSubItemCount(item['path']),
+                                    future: controller.getSubfolderCount(item.path),
                                     builder: (context, snapshot) {
                                       if (snapshot.connectionState == ConnectionState.waiting) {
                                         return const Text('Loading...');
