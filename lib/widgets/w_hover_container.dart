@@ -21,15 +21,22 @@ class _HoverContainerState extends State<HoverContainer> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: Container(
-        padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-        decoration: BoxDecoration(
-          borderRadius: widget.borderRadius ?? BorderRadius.circular(16),
-          color: customTheme.containerColor,
-          border: Border.all(color: customTheme.textColor.withOpacity(_isHovered ? 0.5 : 0), width: 1),
-        ),
-        child: widget.child,
-      ),
+      child: LayoutBuilder(builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final borderRadius = BorderRadius.circular(width * 0.05);
+        return ClipRRect(
+          borderRadius: widget.borderRadius ?? borderRadius,
+          child: Container(
+            padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+            decoration: BoxDecoration(
+              borderRadius: widget.borderRadius ?? borderRadius,
+              color: customTheme.containerColor,
+              border: Border.all(color: customTheme.textColor.withOpacity(_isHovered ? 0.5 : 0), width: 1),
+            ),
+            child: widget.child,
+          ),
+        );
+      }),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:mom_project/widgets/w_file_update_button.dart';
 import 'package:mom_project/widgets/w_hover_container.dart';
 import 'package:mom_project/widgets/w_hover_text.dart';
 import 'package:mom_project/widgets/w_line.dart';
+import 'package:mom_project/widgets/w_video_thumbnail.dart';
 
 class VideosPage extends StatelessWidget {
   const VideosPage({super.key});
@@ -142,12 +143,12 @@ class VideosPage extends StatelessWidget {
                     return InkWell(
                       onTap: item.isDirectory ? () => controller.navigateToFolder(item.path) : null,
                       child: HoverContainer(
+                        padding: const EdgeInsets.all(0),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Expanded(flex: 3, child: SizedBox()),
-                            Icon(item.isDirectory ? Icons.folder : Icons.insert_drive_file, size: 32, color: customTheme.textColor.withOpacity(0.5)),
+                            VideoThumbnail(videoPath: 'http://$nasUrl/files/${Uri.encodeFull(item.path)}'),
                             const Expanded(flex: 3, child: SizedBox()),
                             FittedBox(fit: BoxFit.scaleDown, child: Text(item.name, style: const TextStyle(fontSize: 16))),
                             const Expanded(flex: 2, child: SizedBox()),

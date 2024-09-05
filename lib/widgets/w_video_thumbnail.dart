@@ -1,97 +1,98 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:mom_project/service/api_data.dart';
-
-class VideoThumbnailGenerator extends StatefulWidget {
-  final String videoUrl;
-
-  const VideoThumbnailGenerator({super.key, required this.videoUrl});
+class VideoThumbnail extends StatefulWidget {
+  final String videoPath;
+  const VideoThumbnail({super.key, required this.videoPath});
 
   @override
-  State<VideoThumbnailGenerator> createState() => _VideoThumbnailGeneratorState();
+  State<VideoThumbnail> createState() => _VideoThumbnailState();
 }
 
-class _VideoThumbnailGeneratorState extends State<VideoThumbnailGenerator> {
-  String? _thumbnailUrl;
-  String? _error;
+class _VideoThumbnailState extends State<VideoThumbnail> {
+  late final _player = Player();
+  late final _controller = VideoController(_player);
+  bool _isHovering = false;
 
   @override
   void initState() {
     super.initState();
-    _generateThumbnail();
+    _player.open(Media(widget.videoPath), play: false);
+    _player.setVolume(0);
   }
 
-  Future<void> _generateThumbnail() async {
-    try {
-      final response = await http.post(
-        Uri.parse('http://$synologyApi/video_thumbnail_api.php'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'video_url': widget.videoUrl,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final result = jsonDecode(response.body);
-        if (result['success']) {
-          setState(() {
-            _thumbnailUrl = result['thumbnail_url'];
-          });
-        } else {
-          setState(() {
-            _error = result['error'] ?? 'Unknown error occurred';
-          });
-        }
-      } else {
-        setState(() {
-          _error = 'Server responded with status code: ${response.statusCode}';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Error: $e';
-      });
-    }
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_error != null) {
-      return Text('Error: $_error');
-    }
-
-    if (_thumbnailUrl == null) {
-      return const CircularProgressIndicator();
-    }
-
-    return Image.network(
-      _thumbnailUrl!,
-      width: 200,
-      height: 200,
-      fit: BoxFit.cover,
-      loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-        if (loadingProgress == null) return child;
-        return SizedBox(
-          width: 200,
-          height: 200,
-          child: Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null,
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: MouseRegion(
+        onEnter: (_) => _onHover(true),
+        onExit: (_) => _onHover(false),
+        child: Stack(
+          children: [
+            Video(controller: _controller, controls: NoVideoControls),
+            Positioned(
+              bottom: 15,
+              left: 15,
+              child: Icon(_isHovering ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 20.0),
             ),
-          ),
-        );
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return const SizedBox(
-          width: 200,
-          height: 200,
-          child: Center(child: Icon(Icons.error)),
-        );
-      },
+            Positioned(
+              bottom: 15,
+              right: 15,
+              child: StreamBuilder<Duration>(
+                stream: _player.stream.duration,
+                builder: (context, snapshot) {
+                  final duration = snapshot.data ?? Duration.zero;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      _formatDuration(duration),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.white,
+                        fontWeight: FontWeight.normal,
+                        decoration: TextDecoration.none,
+                        fontStyle: FontStyle.normal,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+      ),
     );
+  }
+
+  void _onHover(bool isHovering) {
+    setState(() {
+      _isHovering = isHovering;
+    });
+
+    if (_isHovering) {
+      _player.play();
+    } else {
+      _player.seek(Duration.zero);
+      _player.pause();
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
   }
 }

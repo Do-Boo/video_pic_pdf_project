@@ -48,6 +48,11 @@ dependencies:
   desktop_drop: ^0.4.4
   html: ^0.15.4
 
+  media_kit: ^1.1.11
+  media_kit_video: ^1.2.5
+  video_player_media_kit: ^1.0.5
+  media_kit_libs_macos_video: ^1.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:mom_project/gets/g_synology_controller.dart';
 import 'package:mom_project/responsive/r_desktop_scaffold.dart';
 import 'package:mom_project/responsive/r_layout.dart';
 import 'package:mom_project/responsive/r_mobile_scaffold.dart';
 import 'package:mom_project/responsive/r_tablet_scaffold.dart';
 import 'package:mom_project/theme/t_app_theme.dart';
+import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  VideoPlayerMediaKit.ensureInitialized(macOS: true);
+  MediaKit.ensureInitialized();
   if (!kIsWeb && (Platform.isWindows || Platform.isMacOS)) {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = const WindowOptions(
