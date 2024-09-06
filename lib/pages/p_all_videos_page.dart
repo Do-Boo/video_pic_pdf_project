@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:mom_project/gets/g_context_controller.dart';
 import 'package:mom_project/gets/g_synology_controller.dart';
 import 'package:mom_project/service/api_data.dart';
 import 'package:mom_project/theme/t_app_theme.dart';
@@ -16,11 +17,12 @@ class VideosPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final customTheme = Theme.of(context).extension<CustomThemeExtension>()!;
-    final controller = Get.find<SynologyFileManagerController>();
+    final controller1 = Get.find<SynologyFileManagerController>();
+    final controller2 = Get.find<ResponsiveController>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (controller.getItems().isEmpty) {
-        controller.searchFiles(fileType: "video");
+      if (controller1.getItems().isEmpty) {
+        controller1.searchFiles(fileType: "video");
       }
     });
 
@@ -70,7 +72,7 @@ class VideosPage extends StatelessWidget {
                 Expanded(
                   child: Obx(() {
                     return Row(
-                      children: controller.getCurrentPath().replaceAll(rootFolder, "").split("/").map((e) {
+                      children: controller1.getCurrentPath().replaceAll(rootFolder, "").split("/").map((e) {
                         if (e.isNotEmpty) {
                           return Row(
                             children: [
@@ -110,10 +112,10 @@ class VideosPage extends StatelessWidget {
                 //     ],
                 //   ),
                 // ),
-                FileUploadButton(controller: controller),
+                FileUploadButton(controller: controller1),
                 TextButton(
                   onPressed: () async {
-                    List<FileItem> videoResults = await controller.searchFiles(fileType: "video");
+                    List<FileItem> videoResults = await controller1.searchFiles(fileType: "video");
                     for (var value in videoResults) {
                       debugPrint(value.path);
                     }
@@ -124,34 +126,38 @@ class VideosPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Obx(() {
-              if (controller.getIsLoading()) {
+              print(controller2.screenRate);
+              if (controller1.getIsLoading()) {
                 return const Center(child: CircularProgressIndicator());
-              } else if (controller.getErrorMessage().isNotEmpty) {
-                return Center(child: Text(controller.getErrorMessage()));
+              } else if (controller1.getErrorMessage().isNotEmpty) {
+                return Center(child: Text(controller1.getErrorMessage()));
               } else {
                 return GridView.builder(
                   shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: controller2.screenRate > 0.8 ? 4 : 3,
                     mainAxisSpacing: 24,
                     crossAxisSpacing: 24,
-                    childAspectRatio: 4 / 3,
+                    childAspectRatio: 4 / 4.2,
                   ),
-                  itemCount: controller.getItems().length,
+                  itemCount: controller1.getItems().length,
                   itemBuilder: (context, index) {
-                    var item = controller.getItems()[index];
+                    var item = controller1.getItems()[index];
                     return InkWell(
-                      onTap: item.isDirectory ? () => controller.navigateToFolder(item.path) : null,
+                      onTap: item.isDirectory ? () => controller1.navigateToFolder(item.path) : null,
                       child: HoverContainer(
                         padding: const EdgeInsets.all(0),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             VideoThumbnail(videoPath: 'http://$nasUrl/files/${Uri.encodeFull(item.path)}'),
-                            const Expanded(flex: 3, child: SizedBox()),
-                            FittedBox(fit: BoxFit.scaleDown, child: Text(item.name, style: const TextStyle(fontSize: 16))),
-                            const Expanded(flex: 2, child: SizedBox()),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              width: double.infinity,
+                              child: Text(item.name.replaceAll(".${item.extension}", ""), textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+                            ),
                           ],
                         ),
                       ),

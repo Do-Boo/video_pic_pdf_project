@@ -41,7 +41,7 @@ class _VideoThumbnailState extends State<VideoThumbnail> {
             Positioned(
               bottom: 15,
               left: 15,
-              child: Icon(_isHovering ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 20.0),
+              child: Icon(_isHovering ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 20),
             ),
             Positioned(
               bottom: 15,

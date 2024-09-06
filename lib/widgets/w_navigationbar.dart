@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:mom_project/gets/g_context_controller.dart';
 import 'package:mom_project/theme/t_app_theme.dart';
 
 class CustomNavigationBar extends StatefulWidget {
@@ -15,6 +17,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   @override
   Widget build(BuildContext context) {
     final customTheme = Theme.of(context).extension<CustomThemeExtension>()!;
+    final ResponsiveController controller = Get.find<ResponsiveController>();
 
     final navTitles = ["HOME", "ALL FILES", "VIDEOS", "PHOTOS", "RECENT", "SETTINGS"];
     final navIcons = [
@@ -36,7 +39,6 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
     ];
 
     return Container(
-      width: 104,
       color: customTheme.containerColor,
       child: Column(
         children: [
@@ -53,22 +55,28 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                 child: GestureDetector(
                   onTap: navActions[i],
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TweenAnimationBuilder<double>(
-                          duration: const Duration(milliseconds: 200),
-                          tween: Tween(begin: 1.0, end: _isHovered[i] ? 1.2 : 1.0),
-                          builder: (context, scale, child) {
-                            return Transform.scale(
-                              scale: scale,
-                              child: HugeIcon(icon: navIcons[i], color: customTheme.textColor.withOpacity(0.5)),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        Text(navTitles[i], style: TextStyle(color: customTheme.textColor.withOpacity(0.5))),
-                      ],
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 200),
+                      tween: Tween(begin: 1.0, end: _isHovered[i] ? 1.2 : 1.0),
+                      builder: (context, scale, child) {
+                        return Transform.scale(
+                          scale: scale,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              HugeIcon(icon: navIcons[i], color: customTheme.textColor.withOpacity(0.5)),
+                              const SizedBox(height: 8),
+                              Obx(() {
+                                controller.screenWidth;
+                                return Text(
+                                  navTitles[i],
+                                  style: TextStyle(color: customTheme.textColor.withOpacity(0.5), fontSize: 12),
+                                );
+                              }),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),

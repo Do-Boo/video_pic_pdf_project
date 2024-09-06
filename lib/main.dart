@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:mom_project/gets/g_context_controller.dart';
 import 'package:mom_project/gets/g_synology_controller.dart';
 import 'package:mom_project/responsive/r_desktop_scaffold.dart';
 import 'package:mom_project/responsive/r_layout.dart';
@@ -16,6 +19,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   VideoPlayerMediaKit.ensureInitialized(macOS: true);
   MediaKit.ensureInitialized();
+
   if (!kIsWeb && (Platform.isWindows || Platform.isMacOS)) {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = const WindowOptions(
@@ -42,6 +46,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       initialBinding: BindingsBuilder(() {
         Get.put(SynologyFileManagerController());
+        Get.put(ResponsiveController());
       }),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
